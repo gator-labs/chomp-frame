@@ -1,50 +1,61 @@
-import {
-  NextServerPageProps
-} from "frames.js/next/server";
-import Link from "next/link";
-import { currentURL } from "./utils";
 
-type State = {
-  active: string;
-  total_button_presses: number;
-};
+import type { Metadata, ResolvingMetadata } from "next";
+import { getFrameMetadata } from "@coinbase/onchainkit";
 
-import { fetchMetadata } from "frames.js/next";
-import type { Metadata } from "next";
-import { createDebugUrl } from "./debug";
-import { vercelURL } from "./utils";
+const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
-export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: "frames.js starter",
-    description: "This is a frames.js starter template",
-    other: {
-      ...(await fetchMetadata(
-        new URL(
-          "/frames",
-          vercelURL() || "http://localhost:3000"
-        )
-      )),
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+export const revalidate = 0 
+
+// https://nextjs.org/docs/app/building-your-application/optimizing/metadata
+export async function generateMetadata(
+  { params, searchParams }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const id = params.id
+ 
+  // fetch data
+  const {question} = await fetch(`http://localhost:3001/api/question/get`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': 'foo' // Adding the 'api-key' header with the value 'foo'
     },
-  };
+  }).then((res) => res.json())
+ console.log("got question")
+ console.log(question)
+  const frameMetadata = getFrameMetadata({
+    image: {
+      src: `${baseURL}/chomp.png`,
+      aspectRatio: "1:1",
+    },
+    buttons: [
+      {
+        label: question,
+        action: "post",
+      },
+    ],
+    postUrl: `${baseURL}api/frames`,
+  });
+ 
+  return {
+    title: "Mint a cNFT on Solana",
+    description: "Mint a cNFT to your verified Solana address using the Helius Mint API",
+    openGraph: {
+      title: "Mint a cNFT on Solana",
+      description: "Mint a cNFT to your verified Solana address using the Helius Mint API",
+      images: ["https://helius-frame.vercel.app/default.jpg"],
+    },
+    other: {
+      ...frameMetadata,
+    },
+  }
 }
 
-// This is a react server component only
-export default async function Home({ searchParams }: NextServerPageProps) {
-  const url = currentURL("/");
-
-  // then, when done, return next frame
+export default function Page() {
   return (
-    <div className="p-4">
-      frames.js starter kit. The Template Frame is on this page, it&apos;s in
-      the html meta tags (inspect source).{" "}
-      <Link href={createDebugUrl(url)} className="underline">
-        Debug
-      </Link>{" "}
-      or see{" "}
-      <Link href="/examples" className="underline">
-        other examples
-      </Link>
-    </div>
+    <p>Chomp frame</p>    
   );
 }
