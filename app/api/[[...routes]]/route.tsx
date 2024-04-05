@@ -27,10 +27,13 @@ const app = new Frog<{ State: State}>({
 })
 
 app.frame('/', async (c: FrameContext) => {
-  const {question} = await fetch(`http://localhost:3001/api/question/get`, {
+  const host = process.env.CHOMP_HOST
+  const url = `${host}/api/question/get`
+  const apiKey = process.env.CHOMP_API_KEY!
+  const {question} = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
-      'api-key': 'foo' // Adding the 'api-key' header with the value 'foo'
+      'api-key': apiKey
     },
   }).then((res) => res.json())
 
@@ -83,7 +86,7 @@ app.frame('/', async (c: FrameContext) => {
 app.frame("/submit-first-order", (c) => {
   const { buttonValue, deriveState } = c;
   const [questionText, questionId, questionOptionId] = buttonValue!.split('~') // ["prompt", "questionId", "questionOptionId"
-	const state = deriveState((previousState) => {
+	deriveState((previousState) => {
 		previousState.questionText = questionText as State["questionText"];
 		previousState.questionId = questionId as State["questionId"];
 		previousState.questionOptionId = questionOptionId as State["questionOptionId"];
@@ -144,7 +147,7 @@ app.frame("/submit-second-order", (c) => {
   // questionId~questionOptionId~percentageGiven
   const args = `vals=${state.questionId}~${state.questionOptionId}~${state.percentageGiven}`
   const link = `${host}/${path}?${args}`
-  console.log("link", link)
+
   return c.res({
     image: (
       <div
