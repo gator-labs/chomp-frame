@@ -31,6 +31,9 @@ export async function generateMetadata(
       src: `${baseURL}/chomp.png`,
       aspectRatio: "1:1",
     },
+    // input: {
+    //   text: "What do you want to mint?",
+    // },
     buttons: [
       {
         label: question,
