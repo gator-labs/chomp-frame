@@ -1,69 +1,186 @@
 /** @jsxImportSource frog/jsx */
 
-import { Button, Frog, TextInput } from 'frog'
+import { Button, FrameContext, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
 // import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 
-const app = new Frog({
+type State = {
+  questionText: string | undefined
+  questionId: string | undefined
+  questionOptionId: string | undefined
+  percentageGiven: number | undefined
+}
+
+const app = new Frog<{ State: State}>({
   assetsPath: '/',
   basePath: '/api',
+  initialState: {
+    questionText: undefined,
+    questionId: undefined,
+    questionOptionId: undefined,
+    percentageGiven: undefined,
+  }, 
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
 
-// Uncomment to use Edge Runtime
-// export const runtime = 'edge'
+app.frame('/', async (c: FrameContext) => {
+  const {question} = await fetch(`http://localhost:3001/api/question/get`, {
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': 'foo' // Adding the 'api-key' header with the value 'foo'
+    },
+  }).then((res) => res.json())
 
-app.frame('/', (c) => {
-  const { buttonValue, inputText, status } = c
-  const fruit = inputText || buttonValue
+ const { question: prompt, questionOptions, id: questionId } = question
+
+  const buttons = questionOptions.map((option: any) => {
+    // Unsure how to change the state from the first frame
+    // Passing all info in the button value to be set in the next frame
+    const value = `${prompt}~${questionId}~${option.id}`
+    return <Button value={value}>{option.option}</Button>
+  }) || []
+
+  return c.res({
+    action: '/submit-first-order',
+    image: (
+      <div
+            style={{
+                alignItems: 'center',
+                background: 'black',
+                backgroundSize: '100% 100%',
+                display: 'flex',
+                flexDirection: 'column',
+                flexWrap: 'nowrap',
+                height: '100%',
+                justifyContent: 'center',
+                textAlign: 'center',
+                width: '100%',
+            }}
+        >
+            <div
+                style={{
+                    color: 'white',
+                    fontSize: 60,
+                    fontStyle: 'normal',
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.4,
+                    marginTop: 30,
+                    padding: '0 120px',
+                    whiteSpace: 'pre-wrap',
+                }}
+            >
+                {prompt}
+            </div>
+        </div>
+    ),
+    intents: buttons
+  })
+})
+
+app.frame("/submit-first-order", (c) => {
+  const { buttonValue, deriveState } = c;
+  const [questionText, questionId, questionOptionId] = buttonValue!.split('~') // ["prompt", "questionId", "questionOptionId"
+	const state = deriveState((previousState) => {
+		previousState.questionText = questionText as State["questionText"];
+		previousState.questionId = questionId as State["questionId"];
+		previousState.questionOptionId = questionOptionId as State["questionOptionId"];
+	});
+  const prompt = `How likely do you think people are to agree with you?`
+
+  return c.res({
+    action: '/submit-second-order',
+    image: (
+      <div
+            style={{
+                alignItems: 'center',
+                background: 'black',
+                backgroundSize: '100% 100%',
+                display: 'flex',
+                flexDirection: 'column',
+                flexWrap: 'nowrap',
+                height: '100%',
+                justifyContent: 'center',
+                textAlign: 'center',
+                width: '100%',
+            }}
+        >
+            <div
+                style={{
+                    color: 'white',
+                    fontSize: 60,
+                    fontStyle: 'normal',
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.4,
+                    marginTop: 30,
+                    padding: '0 120px',
+                    whiteSpace: 'pre-wrap',
+                }}
+            >
+                {prompt}
+            </div>
+        </div>
+    ),
+    intents: [
+      <TextInput placeholder="25%" />,
+      <Button value="submit">Submit</Button>
+    ]
+  })  
+})
+
+app.frame("/submit-second-order", (c) => {
+  const { inputText, deriveState } = c;
+	const state = deriveState((previousState) => {
+		previousState.percentageGiven = inputText as State["percentageGiven"];
+	});
+
+  const prompt = `Finish on Chomp to be eligible for a reward.`
+
+  const host = process.env.CHOMP_HOST
+  const path = 'application/answer/frame'
+  // Frog escapes ampersand, so have to send one long param
+  // questionId~questionOptionId~percentageGiven
+  const args = `vals=${state.questionId}~${state.questionOptionId}~${state.percentageGiven}`
+  const link = `${host}/${path}?${args}`
+  console.log("link", link)
   return c.res({
     image: (
       <div
-        style={{
-          alignItems: 'center',
-          background:
-            status === 'response'
-              ? 'linear-gradient(to right, #432889, #17101F)'
-              : 'black',
-          backgroundSize: '100% 100%',
-          display: 'flex',
-          flexDirection: 'column',
-          flexWrap: 'nowrap',
-          height: '100%',
-          justifyContent: 'center',
-          textAlign: 'center',
-          width: '100%',
-        }}
-      >
-        <div
-          style={{
-            color: 'white',
-            fontSize: 60,
-            fontStyle: 'normal',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.4,
-            marginTop: 30,
-            padding: '0 120px',
-            whiteSpace: 'pre-wrap',
-          }}
+            style={{
+                alignItems: 'center',
+                background: 'linear-gradient(to right, #432889, #17101F)',
+                backgroundSize: '100% 100%',
+                display: 'flex',
+                flexDirection: 'column',
+                flexWrap: 'nowrap',
+                height: '100%',
+                justifyContent: 'center',
+                textAlign: 'center',
+                width: '100%',
+            }}
         >
-          {status === 'response'
-            ? `Nice choice.${fruit ? ` ${fruit.toUpperCase()}!!` : ''}`
-            : 'Welcome!'}
+            <div
+                style={{
+                    color: 'white',
+                    fontSize: 60,
+                    fontStyle: 'normal',
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.4,
+                    marginTop: 30,
+                    padding: '0 120px',
+                    whiteSpace: 'pre-wrap',
+                }}
+            >
+                {prompt}
+            </div>
         </div>
-      </div>
     ),
     intents: [
-      <TextInput placeholder="Enter custom fruit..." />,
-      <Button value="apples">Apples</Button>,
-      <Button value="oranges">Oranges</Button>,
-      <Button value="bananas">Bananas</Button>,
-      status === 'response' && <Button.Reset>Reset</Button.Reset>,
-    ],
-  })
+      <Button.Link href={link}>Go to chomp</Button.Link>
+    ]
+  })  
 })
 
 devtools(app, { serveStatic })
