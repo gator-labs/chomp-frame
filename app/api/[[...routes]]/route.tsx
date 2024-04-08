@@ -30,14 +30,17 @@ app.frame('/', async (c: FrameContext) => {
   const host = process.env.CHOMP_HOST
   const url = `${host}/api/question/get`
   const apiKey = process.env.CHOMP_API_KEY!
-  const {question} = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': apiKey
-    },
-  }).then((res) => res.json())
 
- const { question: prompt, questionOptions, id: questionId } = question
+  // debugging
+  // const question = {question: "Is foo.bar cool?", questionOptions: [{id: 1, option: "Yes"}, {id: 2, option: "No"}], id: 1}
+  const {question} = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': apiKey
+      },
+    }).then((res) => res.json())
+
+  const { question: prompt, questionOptions, id: questionId } = question
 
   const buttons = questionOptions.map((option: any) => {
     // Unsure how to change the state from the first frame
@@ -52,8 +55,8 @@ app.frame('/', async (c: FrameContext) => {
       <div
             style={{
                 alignItems: 'center',
-                background: 'black',
                 backgroundSize: '100% 100%',
+                'backgroundImage': `url("${process.env.FRAME_HOST!}/1.png")`,
                 display: 'flex',
                 flexDirection: 'column',
                 flexWrap: 'nowrap',
@@ -91,15 +94,15 @@ app.frame("/submit-first-order", (c) => {
 		previousState.questionId = questionId as State["questionId"];
 		previousState.questionOptionId = questionOptionId as State["questionOptionId"];
 	});
-  const prompt = `How likely do you think people are to agree with you?`
-
+  const prompt = `How likely do you think others will agree with you?`
+  const helper = `For example enter 25% if you believe 25% of people will give the same response as you did.`
   return c.res({
     action: '/submit-second-order',
     image: (
       <div
             style={{
                 alignItems: 'center',
-                background: 'black',
+                'backgroundImage': `url("${process.env.FRAME_HOST!}/2.png")`,
                 backgroundSize: '100% 100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -124,6 +127,20 @@ app.frame("/submit-first-order", (c) => {
             >
                 {prompt}
             </div>
+            <div
+                style={{
+                    color: 'white',
+                    fontSize: 30,
+                    fontStyle: 'normal',
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.4,
+                    marginTop: 30,
+                    padding: '0 120px',
+                    whiteSpace: 'pre-wrap',
+                }}
+            >
+              {helper}
+            </div>
         </div>
     ),
     intents: [
@@ -133,10 +150,30 @@ app.frame("/submit-first-order", (c) => {
   })  
 })
 
+function normalizePercentage(input: string): number {
+  // Check for a percentage value
+  if (/^\d+%$/.test(input)) {
+    return (parseFloat(input));
+  }
+  // Check for a decimal number or a number starting with a dot
+  else if (/^\d*\.\d+$/.test(input) || /^\.\d+$/.test(input)) {
+    return (parseFloat(input) * 100);
+  }
+  // Check for a plain number
+  else if (/^\d+$/.test(input)) {
+    return parseFloat(input);
+  }
+  // Default case
+  else {
+    return 50;
+  }
+}
+
 app.frame("/submit-second-order", (c) => {
   const { inputText, deriveState } = c;
 	const state = deriveState((previousState) => {
-		previousState.percentageGiven = inputText as State["percentageGiven"];
+    const percentage = normalizePercentage(inputText || "50")
+		previousState.percentageGiven = percentage as State["percentageGiven"]; 
 	});
 
   const prompt = `Finish on Chomp to be eligible for a reward.`
@@ -153,7 +190,7 @@ app.frame("/submit-second-order", (c) => {
       <div
             style={{
                 alignItems: 'center',
-                background: 'linear-gradient(to right, #432889, #17101F)',
+                'backgroundImage': `url("${process.env.FRAME_HOST!}/3.png")`,
                 backgroundSize: '100% 100%',
                 display: 'flex',
                 flexDirection: 'column',
@@ -181,7 +218,7 @@ app.frame("/submit-second-order", (c) => {
         </div>
     ),
     intents: [
-      <Button.Link href={link}>Go to chomp</Button.Link>
+      <Button.Link href={link}>Go to Chomp</Button.Link>
     ]
   })  
 })
