@@ -7,20 +7,20 @@ import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 
 type State = {
-  questionText: string | undefined
-  questionId: string | undefined
-  questionOptionId: string | undefined
-  percentageGiven: number | undefined
+  qText: string | undefined
+  qI: string | undefined
+  qOI: string | undefined
+  qP: number | undefined
 }
 
 const app = new Frog<{ State: State}>({
   assetsPath: '/',
   basePath: '/api',
   initialState: {
-    questionText: undefined,
-    questionId: undefined,
-    questionOptionId: undefined,
-    percentageGiven: undefined,
+    qText: undefined,
+    qI: undefined,
+    qOI: undefined,
+    qP: undefined,
   }, 
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
@@ -33,24 +33,27 @@ app.frame('/', async (c: FrameContext) => {
 
   // debugging
   // const question = {question: "Is foo.bar cool?", questionOptions: [{id: 1, option: "Yes"}, {id: 2, option: "No"}], id: 1}
-  const {question} = await fetch(url, {
+  const { question: deck } = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
         'api-key': apiKey
       },
     }).then((res) => res.json())
 
-  const { question: prompt, questionOptions, id: questionId } = question
+  console.log("got deck")
+  console.log(deck)
+
+  const { question: prompt, questionOptions, id: qI } = deck
 
   const buttons = questionOptions.map((option: any) => {
     // Unsure how to change the state from the first frame
     // Passing all info in the button value to be set in the next frame
-    const value = `${prompt}~${questionId}~${option.id}`
+    const value = `${prompt}~${qI}~${option.id}`
     return <Button value={value}>{option.option}</Button>
   }) || []
 
   return c.res({
-    action: '/submit-first-order',
+    action: '/s1',
     image: (
       <div
             style={{
@@ -86,18 +89,18 @@ app.frame('/', async (c: FrameContext) => {
   })
 })
 
-app.frame("/submit-first-order", (c) => {
+app.frame("/s1", (c) => {
   const { buttonValue, deriveState } = c;
-  const [questionText, questionId, questionOptionId] = buttonValue!.split('~') // ["prompt", "questionId", "questionOptionId"
+  const [qText, qI, qOI] = buttonValue!.split('~') // ["prompt", "qI", "qOI"
 	deriveState((previousState) => {
-		previousState.questionText = questionText as State["questionText"];
-		previousState.questionId = questionId as State["questionId"];
-		previousState.questionOptionId = questionOptionId as State["questionOptionId"];
+		previousState.qText = qText as State["qText"];
+		previousState.qI = qI as State["qI"];
+		previousState.qOI = qOI as State["qOI"];
 	});
   const prompt = `How likely do you think others will agree with you?`
   const helper = `For example enter 25% if you believe 25% of people will give the same response as you did.`
   return c.res({
-    action: '/submit-second-order',
+    action: '/s2',
     image: (
       <div
             style={{
@@ -169,11 +172,11 @@ function normalizePercentage(input: string): number {
   }
 }
 
-app.frame("/submit-second-order", (c) => {
+app.frame("/s2", (c) => {
   const { inputText, deriveState } = c;
 	const state = deriveState((previousState) => {
     const percentage = normalizePercentage(inputText || "50")
-		previousState.percentageGiven = percentage as State["percentageGiven"]; 
+		previousState.qP = percentage as State["qP"]; 
 	});
 
   const prompt = `Finish on Chomp to be eligible for a reward.`
@@ -181,8 +184,8 @@ app.frame("/submit-second-order", (c) => {
   const host = process.env.CHOMP_HOST
   const path = 'application/answer/frame'
   // Frog escapes ampersand, so have to send one long param
-  // questionId~questionOptionId~percentageGiven
-  const args = `vals=${state.questionId}~${state.questionOptionId}~${state.percentageGiven}`
+  // qI~qOI~qP
+  const args = `vals=${state.qI}~${state.qOI}~${state.qP}`
   const link = `${host}/${path}?${args}`
 
   return c.res({
