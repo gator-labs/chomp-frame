@@ -6,10 +6,15 @@ import { devtools } from 'frog/dev'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 
+// Values shortened to save space in the post URLs
 type State = {
-  qText: string | undefined
+  // questionId
   qI: string | undefined
+
+  // questionOptionId
   qOI: string | undefined
+
+  // percentage
   qP: number | undefined
 }
 
@@ -17,7 +22,6 @@ const app = new Frog<{ State: State}>({
   assetsPath: '/',
   basePath: '/api',
   initialState: {
-    qText: undefined,
     qI: undefined,
     qOI: undefined,
     qP: undefined,
@@ -48,7 +52,7 @@ app.frame('/', async (c: FrameContext) => {
   const buttons = questionOptions.map((option: any) => {
     // Unsure how to change the state from the first frame
     // Passing all info in the button value to be set in the next frame
-    const value = `${prompt}~${qI}~${option.id}`
+    const value = `${qI}~${option.id}`
     return <Button value={value}>{option.option}</Button>
   }) || []
 
@@ -91,9 +95,8 @@ app.frame('/', async (c: FrameContext) => {
 
 app.frame("/s1", (c) => {
   const { buttonValue, deriveState } = c;
-  const [qText, qI, qOI] = buttonValue!.split('~') // ["prompt", "qI", "qOI"
+  const [qI, qOI] = buttonValue!.split('~') // ["qI", "qOI"
 	deriveState((previousState) => {
-		previousState.qText = qText as State["qText"];
 		previousState.qI = qI as State["qI"];
 		previousState.qOI = qOI as State["qOI"];
 	});
