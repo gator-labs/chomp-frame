@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import {
   FrameContainer,
   FrameImage,
@@ -31,6 +32,7 @@ export default async function Page(props: NextServerPageProps) {
           state={state}
           previousFrame={previousFrame}
         >
+          {/* @ts-expect-error Type 'ReactNode' is not assignable to type 'ChildType | (ChildType | null)[]'. */}
           <FrameImage>
             {data?.user && (
               <div tw="w-full h-full bg-slate-700 text-white justify-between items-start flex flex-col p-20 text-3xl">
@@ -80,6 +82,7 @@ export default async function Page(props: NextServerPageProps) {
           state={state}
           previousFrame={previousFrame}
         >
+          {/* @ts-expect-error Type 'ReactNode' is not assignable to type 'ChildType | (ChildType | null)[]'. */}
           <FrameImage>
             <div tw="w-full h-full bg-red-700 text-white justify-center items-center flex flex-col p-20">
               <span>{error.message}</span>
@@ -98,6 +101,7 @@ export default async function Page(props: NextServerPageProps) {
         state={state}
         previousFrame={previousFrame}
       >
+        {/* @ts-expect-error Type 'ReactNode' is not assignable to type 'ChildType | (ChildType | null)[]'. */}
         <FrameImage>
           <div tw="w-full h-full bg-red-700 text-white justify-center items-center flex flex-col p-20">
             <span>You are not in DSCVR</span>
@@ -121,6 +125,7 @@ export default async function Page(props: NextServerPageProps) {
       state={state}
       previousFrame={previousFrame}
     >
+      {/* @ts-expect-error Type 'ReactNode' is not assignable to type 'ChildType | (ChildType | null)[]'. */}
       <FrameImage>
         <div tw="w-full h-full bg-slate-700 text-white justify-center items-center flex p-20">
           <span>
