@@ -17,6 +17,7 @@ export default function QuestionSecondOrder({
   state: State;
   answerOption: number;
 }) {
+  const HOST_URL = process.env.NEXT_PUBLIC_HOST;
   return (
     <FrameContainer
       postUrl="/frames"
@@ -30,7 +31,7 @@ export default function QuestionSecondOrder({
           <img
             alt="cover"
             tw="relative w-full h-full bg-sky-200"
-            src="http://localhost:3000/3.png"
+            src={`${HOST_URL}/3.png`}
             width={500}
             height={500}
           >

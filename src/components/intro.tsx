@@ -9,6 +9,7 @@ export default function Intro({
   previousFrame: PreviousFrame;
   state: State;
 }) {
+  const HOST_URL = process.env.NEXT_PUBLIC_HOST;
   return (
     <FrameContainer
       postUrl="/frames"
@@ -22,7 +23,7 @@ export default function Intro({
           <img
             alt="cover"
             tw="relative w-full h-full bg-sky-200"
-            src="http://localhost:3000/background.png"
+            src={`${HOST_URL}/background.png`}
             width={500}
             height={500}
           >

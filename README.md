@@ -31,10 +31,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 Since all of the action happens in the headers, go ahead an try [DSCVR frame validator](https://dscvr.one/dev/frames):
 
-1. Once the project is running on port 3000, run 
-    ```sh
-    npx localtunnel --port 3000
-    ```
+1. Once the project is running on port 3000, run
+   ```sh
+   npx localtunnel --port 3000
+   ```
 2. Copy the provided url
 3. Go to [DSCVR frame validator](https://dscvr.one/dev/frames)
 4. Test it out!

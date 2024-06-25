@@ -12,6 +12,7 @@ export default function Question({
   state: State;
   question: QuestionDeck;
 }) {
+  const HOST_URL = process.env.NEXT_PUBLIC_HOST;
   return (
     <FrameContainer
       postUrl="/frames"
@@ -25,7 +26,7 @@ export default function Question({
             <img
               alt="cover"
               tw="relative w-full h-full bg-sky-200"
-              src="http://localhost:3000/2.png"
+              src={`${HOST_URL}/2.png`}
               width={500}
               height={500}
             >
